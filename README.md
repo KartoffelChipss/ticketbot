@@ -6,7 +6,7 @@ Simple Ticketbot for Discord
 
 To configure the bot for your Server, create a `options.json` file in the root directory with the following values:
 
-````js
+```js
 {
     "guildId": "Your server id",
     "ticketCategory": "The category, where tickets should be created",
