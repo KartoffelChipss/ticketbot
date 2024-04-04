@@ -6,6 +6,7 @@ const fs = require("fs");
 const chalk = require("chalk");
 const options = require("./options.json");
 const mongoose = require("mongoose");
+const ticketModel = require("./ticketmodel");
 
 const devMode = process.env.NODE_ENV === "development";
 
@@ -31,10 +32,7 @@ client.once("ready", async () => {
     console.log(chalk.default.greenBright(`${chalk.default.yellow(client.user.tag)} is now online!`));
     console.log(chalk.default.greenBright(`${chalk.default.yellow(client.user.tag)} is on ${chalk.default.yellow(client.guilds.cache.size)} servers!`));
 
-    client.user.setPresence({
-        activities: [{ name: `your Tickets`, type: ActivityType.Watching }],
-        status: 'online',
-    });
+    setStatus();
 
     /* --- Register commands --- */
     const guildId = options.guildId;
@@ -50,6 +48,24 @@ client.once("ready", async () => {
         commands.create(commandFile.command)
     }
 });
+
+async function setStatus() {
+    const tickets = await ticketModel.countDocuments();
+
+    client.user.setPresence({
+        activities: [{ name: `Managing ${tickets} open Tickets`, type: ActivityType.Custom }],
+        status: 'online',
+    });
+
+    setInterval(async () => {
+        const tickets = await ticketModel.countDocuments();
+
+        client.user.setPresence({
+            activities: [{ name: `Managing ${tickets} open Tickets`, type: ActivityType.Custom }],
+            status: 'online',
+        });
+    }, 300000);
+}
 
 client.on("error", (err) => {
     console.log(err);
