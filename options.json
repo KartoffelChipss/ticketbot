@@ -1,6 +1,83 @@
 {
     "guildId": "774263159674503188",
+    "publicTickets": "1225388951997779998",
     "ticketCategory": "1163133571821731942",
     "archiveId": "1163133690155630774",
-    "ticketManagerRole": "987675880291700836"
+    "ticketManagerRole": "987675880291700836",
+    "projects": [
+        {
+            "id": "lifestealz",
+            "name": "LifeStealZ",
+            "description": "",
+            "type": "mcplugin",
+            "emoji": {
+                "name": "lifestealz",
+                "id": "1163131461231198328"
+            },
+            "fields": [
+                {
+                    "id": "serversoftware",
+                    "label": "What Server Software do you use?",
+                    "placeholder": "PapaerMC, Spigot, Bukkit etc.",
+                    "required": true,
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "long": false,
+                    "name": "Server Software"
+                },
+                {
+                    "id": "serverversion",
+                    "label": "What MC Version is your Server running on?",
+                    "placeholder": "1.8.8, 1.16.5, 1.20.1 etc.",
+                    "required": true,
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "long": false,
+                    "name": "Server Version"
+                },
+                {
+                    "id": "pluginversion",
+                    "label": "What Version of the Plugin are you using?",
+                    "placeholder": "1.0.0, 1.0.9, 1.2.2 etc.",
+                    "required": true,
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "long": false,
+                    "name": "Plugin Version"
+                },
+                {
+                    "id": "problemdescription",
+                    "label": "Describe your problem",
+                    "placeholder": "Expected and actual behavior as well as the steps to reproduce",
+                    "required": true,
+                    "minLength": 3,
+                    "maxLength": 1000,
+                    "long": true,
+                    "name": "Problem"
+                }
+            ]
+        },
+        {
+            "id": "other",
+            "name": "Other",
+            "description": "",
+            "type": "other",
+            "emoji": {
+                "name": "dots",
+                "id": "1163132845825470547"
+            },
+            "fields": [
+                {
+                    "id": "problemdescription",
+                    "label": "Describe your problem",
+                    "placeholder": "Expected and actual behavior as well as the steps to reproduce",
+                    "required": true,
+                    "minLength": 3,
+                    "maxLength": 1000,
+                    "long": true,
+                    "name": "Problem"
+                }
+            ]
+        }
+    ]
 }

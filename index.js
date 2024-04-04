@@ -7,6 +7,8 @@ const chalk = require("chalk");
 const options = require("./options.json");
 const mongoose = require("mongoose");
 
+const devMode = process.env.NODE_ENV === "development";
+
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
@@ -20,13 +22,9 @@ for (const file of eventFiles) {
     }
 }
 
-if (process.env.DEVMODE === "true") {
-    console.log(chalk.default.red("Bot started in development mode!"))
-}
+if (devMode) console.log(chalk.default.red("Bot started in development mode!"));
 
-mongoose.connect(process.env.MONGOURI, {
-    keepAlive: true
-}).then(() => console.log(chalk.default.greenBright("Connected to database")));
+mongoose.connect(process.env.MONGOURI, {}).then(() => console.log(chalk.default.greenBright("Connected to database")));
 
 client.once("ready", async () => {
     /* --- Send confirmation messages --- */

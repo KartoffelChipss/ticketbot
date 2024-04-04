@@ -9,6 +9,7 @@ To configure the bot for your Server, create a `options.json` file in the root d
 ```js
 {
     "guildId": "Your server id",
+    "publicTickets": "Forum channel, where public tickets should be created",
     "ticketCategory": "The category, where tickets should be created",
     "archiveId": "The category, where tickets should be archoved to",
     "ticketManagerRole": "A role that should have access to the tickets and get pinged when one is created"

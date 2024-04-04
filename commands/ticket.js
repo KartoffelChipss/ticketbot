@@ -1,6 +1,8 @@
 const botoptions = require("../options.json");
 const mongoose = require("mongoose");
-const ticketmodal = require('../ticketmodal.js');
+const ticketmodel = require('../ticketmodel.js');
+const { getStandardEmbed } = require("../util/messages.js");
+const { PermissionFlagsBits } = require("discord.js");
 
 let command = {
     name: "ticket",
@@ -35,10 +37,13 @@ let command = {
     ]
 }
 
+/**
+ * 
+ * @param {import("discord.js").Interaction} interaction
+ * @returns 
+ */
 let executeCommand = async function executeCommand(interaction, getLocale) {
-    const { commandName, options } = interaction;
-
-    let ticketDoc = await ticketmodal.findOne({ ticketid: interaction.channel.id });
+    let ticketDoc = await ticketmodel.findOne({ ticketid: interaction.channel.id });
 
     if (!ticketDoc) {
         interaction.reply({
@@ -72,7 +77,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodal.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: false }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: false }, { returnOriginal: false });
 
             await channel.permissionOverwrites.create(ticketDoc.userId, {
                 ViewChannel: true,
@@ -83,19 +88,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
             channel.send({
                 "content": ``,
                 "ephemeral": false,
-                "embeds": [
-                    {
-                        "type": "rich",
-                        "title": ``,
-                        "description": `🔓 **This Ticket has been unlocked**`,
-                        "color": 0x2B2D31,
-                        //"color": 0x4673FF,
-                        // "footer": {
-                        //     "text": `Bot by Kartoffelchips#0445`,
-                        //     "icon_url": `https://strassburger.org/img/pp.png`
-                        // }
-                    }
-                ]
+                "embeds": [ getStandardEmbed(`🔓 **This Ticket has been unlocked**`) ]
             });
 
             setTimeout(() => {
@@ -107,7 +100,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodal.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: true }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: true }, { returnOriginal: false });
 
             await channel.permissionOverwrites.create(ticketDoc.userId, {
                 ViewChannel: true,
@@ -118,19 +111,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
             channel.send({
                 "content": ``,
                 "ephemeral": false,
-                "embeds": [
-                    {
-                        "type": "rich",
-                        "title": ``,
-                        "description": `🔒 **This Ticket has been closed**`,
-                        "color": 0x2B2D31,
-                        //"color": 0x4673FF,
-                        // "footer": {
-                        //     "text": `Bot by Kartoffelchips#0445`,
-                        //     "icon_url": `https://strassburger.org/img/pp.png`
-                        // }
-                    }
-                ]
+                "embeds": [ getStandardEmbed(`🔒 **This Ticket has been closed**`) ]
             });
 
             setTimeout(() => {
@@ -140,7 +121,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
     }
 
     if (interaction.options.getSubcommand() === "archive") {
-        if (!interaction.member.roles.cache.find(r => r.id === botoptions.ticketManagerRole)) {
+        if (!interaction.member.roles.cache.find(r => r.id === botoptions.ticketManagerRole) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
             interaction.reply({
                 content: "<:KMC_rotesx:995387682643509329> You don't have permission to do that!",
                 ephemeral: true,
@@ -162,7 +143,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodal.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: false }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: false }, { returnOriginal: false });
 
             await channel.setParent(botoptions.ticketCategory).catch(console.error)
 
@@ -187,14 +168,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
             channel.send({
                 "content": ``,
                 "ephemeral": false,
-                "embeds": [
-                    {
-                        "type": "rich",
-                        "title": ``,
-                        "description": `📂 **This Ticket has been restored**`,
-                        "color": 0x2B2D31,
-                    }
-                ]
+                "embeds": [ getStandardEmbed(`📂 **This Ticket has been restored**`) ]
             });
 
             setTimeout(() => {
@@ -206,7 +180,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodal.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: true }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: true }, { returnOriginal: false });
 
             await channel.setParent(botoptions.archiveId).catch(console.error)
 
@@ -231,14 +205,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
             channel.send({
                 "content": ``,
                 "ephemeral": false,
-                "embeds": [
-                    {
-                        "type": "rich",
-                        "title": ``,
-                        "description": `📁 **This Ticket has been archived**`,
-                        "color": 0x2B2D31,
-                    }
-                ]
+                "embeds": [ getStandardEmbed(`📁 **This Ticket has been archived**`) ]
             });
 
             setTimeout(() => {
@@ -248,7 +215,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
     }
 
     if (interaction.options.getSubcommand() === "delete") {
-        if (!interaction.member.roles.cache.find(r => r.id === botoptions.ticketManagerRole)) {
+        if (!interaction.member.roles.cache.find(r => r.id === botoptions.ticketManagerRole) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
             interaction.reply({
                 content: "<:KMC_rotesx:995387682643509329> You don't have permission to do that!",
                 ephemeral: true,
@@ -267,14 +234,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
         interaction.reply({
             "content": ``,
             "ephemeral": false,
-            "embeds": [
-                {
-                    "type": "rich",
-                    "title": ``,
-                    "description": `❗ Are you sure you want to delete this ticket?`,
-                    "color": 0x2B2D31,
-                }
-            ],
+            "embeds": [ getStandardEmbed(`❗ Are you sure you want to delete this ticket?`) ],
             "components": [
                 {
                     "type": 1,

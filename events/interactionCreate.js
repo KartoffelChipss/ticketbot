@@ -1,11 +1,52 @@
 const path = require('node:path');
 const fs = require("fs");
 const options = require("../options.json");
-const mongoose = require("mongoose");
-const ticketmodal = require('../ticketmodal.js');
+const ticketmodal = require('../ticketmodel.js');
+const { getStandardEmbed, getTicketMessage } = require("../util/messages.js");
+
+/**
+ * Find a button file
+ * @param {String} dir - The path to the button directory
+ * @param {String} buttonId - The id of the button
+ * @returns {String} - The path to the button file
+ */
+function findButtonFile(dir, buttonId) {
+    const files = fs.readdirSync(dir);
+    
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+
+        if (!stat.isDirectory()) {
+            const buttonModule = require(fullPath);
+            if (buttonModule && buttonModule.buttonId === buttonId) return fullPath;
+        }
+        
+        if (stat.isDirectory()) {
+            const result = findButtonFile(fullPath, buttonId);
+            if (result) return result;
+        }
+    }
+}
+
+function checkButton(interaction) {
+    if (interaction.isButton()) {
+        const buttonsDir = path.join(process.cwd(), 'buttons');
+
+        const filePath = findButtonFile(buttonsDir, interaction.customId);
+        if (!filePath) return;
+        const buttonModule = require(filePath);
+        if (buttonModule) buttonModule.clickButton(interaction);
+        return;
+    }
+}
 
 module.exports = {
     name: 'interactionCreate',
+    /**
+     * Execute the command
+     * @param {import('discord.js').Interaction} interaction - The interaction that triggered the command
+     */
     async execute(interaction) {
 
         if (interaction.isCommand()) {
@@ -22,64 +63,9 @@ module.exports = {
             }
         }
 
+        checkButton(interaction);
+
         if (interaction.isButton()) {
-            if (interaction.customId === "ticket_create") {
-                interaction.reply({
-                    "content": " ",
-                    "ephemeral": true,
-                    "embeds": [
-                        {
-                            "type": "rich",
-                            "title": "",
-                            "description": `Please select below, what Project your Ticket is about`,
-                            "color": 0x2B2D31
-                        }
-                    ],
-                    "components": [
-                        {
-                            "type": 1,
-                            "components": [
-                                {
-                                    "type": 3,
-                                    "custom_id": "project_select",
-                                    "options": [
-                                        {
-                                            "label": "Argus",
-                                            "value": "argus",
-                                            "description": "",
-                                            "emoji": {
-                                                "name": "argus",
-                                                "id": "1145039798369800232"
-                                            }
-                                        },
-                                        {
-                                            "label": "LifeStealZ",
-                                            "value": "lifestealz",
-                                            "description": "",
-                                            "emoji": {
-                                                "name": "lifestealz",
-                                                "id": "1163131461231198328"
-                                            }
-                                        },
-                                        {
-                                            "label": "Other",
-                                            "value": "other",
-                                            "description": "",
-                                            "emoji": {
-                                                "name": "dots",
-                                                "id": "1163132845825470547"
-                                            }
-                                        }
-                                    ],
-                                    "placeholder": "Choose a Project",
-                                    "min_values": 1,
-                                    "max_values": 1
-                                }
-                            ]
-                        }
-                    ]
-                }).catch(console.error)
-            }
 
             if (interaction.customId.split("_")[0] === "tclose") {
                 let channelID = interaction.customId.split("_")[1];
@@ -125,19 +111,7 @@ module.exports = {
                     channel.send({
                         "content": ``,
                         "ephemeral": false,
-                        "embeds": [
-                            {
-                                "type": "rich",
-                                "title": ``,
-                                "description": `🔓 **This Ticket has been unlocked**`,
-                                "color": 0x2B2D31,
-                                //"color": 0x4673FF,
-                                // "footer": {
-                                //     "text": `Bot by Kartoffelchips#0445`,
-                                //     "icon_url": `https://strassburger.org/img/pp.png`
-                                // }
-                            }
-                        ]
+                        "embeds": [ getStandardEmbed(`🔓 **This Ticket has been unlocked**`) ]
                     });
                 } else {
                     await ticketmodal.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: true }, { returnOriginal: false });
@@ -153,19 +127,7 @@ module.exports = {
                     channel.send({
                         "content": ``,
                         "ephemeral": false,
-                        "embeds": [
-                            {
-                                "type": "rich",
-                                "title": ``,
-                                "description": `🔒 **This Ticket has been closed**`,
-                                "color": 0x2B2D31,
-                                //"color": 0x4673FF,
-                                // "footer": {
-                                //     "text": `Bot by Kartoffelchips#0445`,
-                                //     "icon_url": `https://strassburger.org/img/pp.png`
-                                // }
-                            }
-                        ]
+                        "embeds": [ getStandardEmbed(`🔒 **This Ticket has been closed**`) ]
                     });
                 }
             }
@@ -214,36 +176,37 @@ module.exports = {
             }
         }
 
-        if (interaction.isStringSelectMenu()) {
-            if (interaction.customId === "project_select") {
-                let project = interaction.values[0];
-
-                //await interaction.message.delete().catch(console.error);
+        if (interaction.isModalSubmit()) {
+            if (interaction.customId.startsWith("t_create")) {
+                const projectID = interaction.customId.split("-")[1];
+                const project = options.projects.find(p => p.id === projectID);
 
                 interaction.reply({
                     content: "<a:KMC_loading:1005352031457906788> Creating Ticket...",
                     ephemeral: true,
                 });
 
-                let userHastickets = await ticketmodal.find({ userId: interaction.user.id });
-
-                if (userHastickets.length >= 5) {
-                    setTimeout(() => {
-                        interaction.editReply({
-                            content: `<:KMC_rotesx:995387682643509329> You cannot have more than 5 Tickets open at the same time!`,
-                            ephemeral: true,
-                        });
-                    }, 1000);
-                    return;
-                }
+                const fields = project.fields.map(field => {
+                    return {
+                        label: field.name,
+                        value: interaction.fields.getTextInputValue(field.id)
+                    }
+                })
 
                 interaction.guild.channels.create({
-                    name: `${interaction.user.globalName}-${project}`,
+                    name: `${interaction.user.globalName}-${project.id}`,
                     type: 0,
                 })
-                    .catch(console.error)
+                    .catch((err) => {
+                        console.error(err);
+                        setTimeout(() => {
+                            interaction.editReply({
+                                content: `<:KMC_rotesx:995387682643509329> There was an error whilst creating your Ticket!`,
+                                ephemeral: true,
+                            });
+                        }, 1000);
+                    })
                     .then(async (channel) => {
-
                         if (!channel) {
                             setTimeout(() => {
                                 interaction.editReply({
@@ -256,11 +219,11 @@ module.exports = {
 
                         channel.setParent(options.ticketCategory).catch(console.error)
 
-                        let newTicket = await ticketmodal.create({ userId: interaction.user.id, ticketid: channel.id, project: project });
+                        let newTicket = await ticketmodal.create({ userId: interaction.user.id, ticketid: channel.id, project: project.id });
 
                         setTimeout(async () => {
                             interaction.editReply({
-                                content: `<:KMC_BlauerHaken:987665905041424474> Dein Ticket wurde erfolgreich erstellt: <#${channel.id}>`,
+                                content: `<:KMC_BlauerHaken:987665905041424474> Your ticket has been created: <#${channel.id}>`,
                                 ephemeral: true,
                             }).catch(console.error)
 
@@ -282,54 +245,208 @@ module.exports = {
                                 ReadMessageHistory: true
                             }).catch(console.error)
 
-                            channel.send({
-                                "content": `<@${interaction.user.id}>||<@&${options.ticketManagerRole}>||`,
-                                "tts": false,
-                                "components": [
-                                    {
-                                        "type": 1,
-                                        "components": [
-                                            {
-                                                "style": 2,
-                                                "label": "Close Ticket",
-                                                "custom_id": `tclose_${channel.id}`,
-                                                "disabled": false,
-                                                "emoji": {
-                                                    "id": null,
-                                                    "name": `🔒`
-                                                },
-                                                "type": 2
-                                            },
-                                            // {
-                                            //     "style": 2,
-                                            //     "label": "Archive Ticket",
-                                            //     "custom_id": `tarchive_${channel.id}`,
-                                            //     "disabled": false,
-                                            //     "emoji": {
-                                            //         "id": null,
-                                            //         "name": `📁`
-                                            //     },
-                                            //     "type": 2
-                                            // }
-                                        ]
-                                    }
-                                ],
-                                "embeds": [
-                                    {
-                                        "type": "rich",
-                                        "title": `${interaction.user.globalName}'s Ticket`,
-                                        "description": `**Project**: \n> ${project}\n\n**User ID**: \n> ${interaction.user.id}\n\nDescribe your request and a supporter will be with you shortly!\n\nYou can close this ticket with 🔒.`,
-                                        "color": 0x2B2D31,
-                                        //"color": 0x4673FF,
-                                        "footer": {
-                                            "text": `Bot by Kartoffelchips#0445`,
-                                            "icon_url": `https://strassburger.org/img/pp.png`
-                                        }
-                                    }
-                                ]
-                            }).catch(console.error)
+                            channel.send(
+                                getTicketMessage({
+                                    channel,
+                                    creator: interaction.user,
+                                    project,
+                                }, fields)
+                            ).catch(console.error)
+
                         }, 1000)
                     });
+            }
+
+            if (interaction.customId.startsWith("other_t_create")) {
+                const projectID = interaction.customId.split("-")[1];
+                const project = options.projects.find(p => p.id === projectID);
+
+                const problemdescription = interaction.fields.getTextInputValue("problemdescription");
+
+                interaction.reply({
+                    content: "<a:KMC_loading:1005352031457906788> Creating Ticket...",
+                    ephemeral: true,
+                });
+
+                interaction.guild.channels.create({
+                    name: `${interaction.user.globalName}-${project.id}`,
+                    type: 0,
+                })
+                    .catch((err) => {
+                        console.error(err);
+                        setTimeout(() => {
+                            interaction.editReply({
+                                content: `<:KMC_rotesx:995387682643509329> There was an error whilst creating your Ticket!`,
+                                ephemeral: true,
+                            });
+                        }, 1000);
+                    })
+                    .then(async (channel) => {
+                        if (!channel) {
+                            setTimeout(() => {
+                                interaction.editReply({
+                                    content: `<:KMC_rotesx:995387682643509329> There was an error whilst creating your Ticket!`,
+                                    ephemeral: true,
+                                });
+                            }, 1000);
+                            return;
+                        }
+
+                        channel.setParent(options.ticketCategory).catch(console.error)
+
+                        let newTicket = await ticketmodal.create({ userId: interaction.user.id, ticketid: channel.id, project: project.id });
+
+                        setTimeout(async () => {
+                            interaction.editReply({
+                                content: `<:KMC_BlauerHaken:987665905041424474> Your ticket has been created: <#${channel.id}>`,
+                                ephemeral: true,
+                            }).catch(console.error)
+
+                            channel.permissionOverwrites.create(interaction.member, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            }).catch(console.error)
+
+                            await channel.permissionOverwrites.create(interaction.guild.roles.everyone, {
+                                ViewChannel: false,
+                                SendMessages: false,
+                                ReadMessageHistory: false
+                            }).catch(console.error)
+
+                            channel.permissionOverwrites.create(options.ticketManagerRole, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            }).catch(console.error)
+
+                            channel.send(
+                                getTicketMessage({
+                                    channel,
+                                    creator: interaction.user,
+                                    project,
+                                },
+                                [
+                                    {
+                                        label: "Problem",
+                                        value: problemdescription
+                                    }
+                                ])
+                            ).catch(console.error)
+
+                        }, 1000)
+                    });
+            }
+
+
+            if (interaction.customId.startsWith("mcplugin_t_create")) {
+                const projectID = interaction.customId.split("-")[1];
+                const project = options.projects.find(p => p.id === projectID);
+
+                const serversoftware = interaction.fields.getTextInputValue("serversoftware");
+                const serverversion = interaction.fields.getTextInputValue("serverversion");
+                const pluginversion = interaction.fields.getTextInputValue("pluginversion");
+                const problemdescription = interaction.fields.getTextInputValue("problemdescription");
+
+                interaction.reply({
+                    content: "<a:KMC_loading:1005352031457906788> Creating Ticket...",
+                    ephemeral: true,
+                });
+
+                interaction.guild.channels.create({
+                    name: `${interaction.user.globalName}-${project.id}`,
+                    type: 0,
+                })
+                    .catch((err) => {
+                        console.error(err);
+                        setTimeout(() => {
+                            interaction.editReply({
+                                content: `<:KMC_rotesx:995387682643509329> There was an error whilst creating your Ticket!`,
+                                ephemeral: true,
+                            });
+                        }, 1000);
+                    })
+                    .then(async (channel) => {
+                        if (!channel) {
+                            setTimeout(() => {
+                                interaction.editReply({
+                                    content: `<:KMC_rotesx:995387682643509329> There was an error whilst creating your Ticket!`,
+                                    ephemeral: true,
+                                });
+                            }, 1000);
+                            return;
+                        }
+
+                        channel.setParent(options.ticketCategory).catch(console.error)
+
+                        let newTicket = await ticketmodal.create({ userId: interaction.user.id, ticketid: channel.id, project: project.id });
+
+                        setTimeout(async () => {
+                            interaction.editReply({
+                                content: `<:KMC_BlauerHaken:987665905041424474> Your ticket has been created: <#${channel.id}>`,
+                                ephemeral: true,
+                            }).catch(console.error)
+
+                            channel.permissionOverwrites.create(interaction.member, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            }).catch(console.error)
+
+                            await channel.permissionOverwrites.create(interaction.guild.roles.everyone, {
+                                ViewChannel: false,
+                                SendMessages: false,
+                                ReadMessageHistory: false
+                            }).catch(console.error)
+
+                            channel.permissionOverwrites.create(options.ticketManagerRole, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            }).catch(console.error)
+
+                            channel.send(
+                                getTicketMessage({
+                                    channel,
+                                    creator: interaction.user,
+                                    project,
+                                },
+                                [
+                                    {
+                                        label: "Server",
+                                        value: `${serversoftware}, MC ${serverversion}`
+                                    },
+                                    {
+                                        label: "Plugin Version",
+                                        value: pluginversion
+                                    },
+                                    {
+                                        label: "Problem",
+                                        value: problemdescription
+                                    }
+                                ])
+                            ).catch(console.error)
+                        }, 1000)
+                    });
+            }
+        }
+
+        if (interaction.isStringSelectMenu()) {
+            if (interaction.customId === "project_select") {
+                const projectId = interaction.values[0];
+                const project = options.projects.find(p => p.id === projectId);
+
+                if (!project) {
+                    interaction.reply({
+                        content: `<:KMC_rotesx:995387682643509329> This Project does not exist!`,
+                        ephemeral: true,
+                    })
+                    return;
+                }
+
+                const getModal = require("../util/modals.js");
+                const modal = getModal(project);
+                await interaction.showModal(modal);
             }
         }
 
