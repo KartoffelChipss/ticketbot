@@ -10,7 +10,7 @@ function getModal(project) {
 
     const modal = new ModalBuilder()
         .setTitle("Ticket")
-        .setCustomId(`t_create`)
+        .setCustomId(`t_create-${project.id}`)
 
     for (const field of project.fields) {
         const input = new TextInputBuilder()
