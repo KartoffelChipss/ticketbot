@@ -45,10 +45,9 @@ client.once("ready", async () => {
                 const differenceSeconds = difference / 1000;
                 const differenceInHours = difference / (1000 * 60 * 60);
                 
-                if (differenceSeconds >= 60) {
+                if (differenceInHours >= 24) {
                     console.log(`${chalk.default.gray(">")} Deleting ticket ${ticket.ticketid} (by ${ticket.userId}) because it has been archived long enough...`);
                     const ticketChannel = await client.channels.fetch(ticket.ticketid);
-                    console.log(ticketChannel);
                     if (ticketChannel) {
                         ticketChannel.delete().then(() => {
                             console.log(`${chalk.default.gray(">")} Deleted channel ${ticketChannel.name}`);
@@ -63,7 +62,7 @@ client.once("ready", async () => {
                 }
             }
         });
-    }, 1000 * 10);
+    }, 1000 * 60 * 60);
     
     console.log(chalk.default.greenBright("Initialized deletion schedule!"));
 
@@ -104,5 +103,9 @@ client.on("error", (err) => {
     console.log(err);
 });
 client.on("warn", console.warn);
+
+process.on("unhandledRejection", (err) => {
+    console.error(err);
+});
 
 client.login(process.env.TOKEN);
