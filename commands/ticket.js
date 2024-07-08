@@ -77,7 +77,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: false }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { $set: { closed: false } }, { returnOriginal: false });
 
             await channel.permissionOverwrites.create(ticketDoc.userId, {
                 ViewChannel: true,
@@ -100,7 +100,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { closed: true }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { $set: { closed: true } }, { returnOriginal: false });
 
             await channel.permissionOverwrites.create(ticketDoc.userId, {
                 ViewChannel: true,
@@ -143,7 +143,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: false }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { $set: { archived: false, archivedAt: null } }, { returnOriginal: false });
 
             await channel.setParent(botoptions.ticketCategory).catch(console.error)
 
@@ -180,7 +180,7 @@ let executeCommand = async function executeCommand(interaction, getLocale) {
                 ephemeral: true,
             }).catch(console.error)
 
-            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { archived: true }, { returnOriginal: false });
+            await ticketmodel.findOneAndUpdate({ ticketid: ticketDoc.ticketid }, { $set: { archived: true, archivedAt: new Date() } }, { returnOriginal: false });
 
             await channel.setParent(botoptions.archiveId).catch(console.error)
 

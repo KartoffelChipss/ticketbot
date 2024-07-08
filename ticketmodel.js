@@ -14,6 +14,10 @@ module.exports = mongoose.model(
             type: Boolean,
             default: false
         },
+        archivedAt: {
+            type: Date,
+            default: null
+        },
         messageLog: {
             type: Array,
             default: [],

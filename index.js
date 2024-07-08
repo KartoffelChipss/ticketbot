@@ -1,5 +1,5 @@
 const { Client, Intents, User, GatewayIntentBits, Interaction, Constants, Collection, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, SelectMenuBuilder, ModalBuilder, TextInputBuilder, ActivityType, AutoModerationActionExecution } = require("discord.js");
-const client = new Client({ partials: ["CHANNEL"], intents: 1537 });
+const client = new Client({ partials: ["CHANNEL"], intents: 33281 });
 require("dotenv").config();
 const path = require('node:path');
 const fs = require("fs");
@@ -33,6 +33,39 @@ client.once("ready", async () => {
     console.log(chalk.default.greenBright(`${chalk.default.yellow(client.user.tag)} is on ${chalk.default.yellow(client.guilds.cache.size)} servers!`));
 
     setStatus();
+
+    /* --- Initialize deletion schedule --- */
+    deletionSchedule = setInterval(() => {
+        const now = new Date();
+        
+        ticketModel.find({ archived: true }).then(async tickets => {
+            for (const ticket of tickets) {
+                const archivedAt = ticket.archivedAt;
+                const difference = now - archivedAt;
+                const differenceSeconds = difference / 1000;
+                const differenceInHours = difference / (1000 * 60 * 60);
+                
+                if (differenceSeconds >= 60) {
+                    console.log(`${chalk.default.gray(">")} Deleting ticket ${ticket.ticketid} (by ${ticket.userId}) because it has been archived long enough...`);
+                    const ticketChannel = await client.channels.fetch(ticket.ticketid);
+                    console.log(ticketChannel);
+                    if (ticketChannel) {
+                        ticketChannel.delete().then(() => {
+                            console.log(`${chalk.default.gray(">")} Deleted channel ${ticketChannel.name}`);
+                        });
+                    } else {
+                        console.log(`${chalk.default.gray(">")} Ticketchannel ${ticket.ticketid} does not exist anymore!`);
+                    }
+
+                    ticketModel.deleteOne({ ticketid: ticket.ticketid }).then(() => {
+                        console.log(`${chalk.default.gray(">")} Deleted ticket ${ticket.ticketid} successfully!\n`);
+                    });
+                }
+            }
+        });
+    }, 1000 * 10);
+    
+    console.log(chalk.default.greenBright("Initialized deletion schedule!"));
 
     /* --- Register commands --- */
     const guildId = options.guildId;
