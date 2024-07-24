@@ -69,7 +69,6 @@ let executeCommand = function executeCommand(interaction, getLocale) {
             {
                 "type": "rich",
                 "title": "Created message!",
-                //"description": `> **${delay}ms** Ping`,
                 "color": 0x2B2D31,
             }
         ]
