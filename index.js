@@ -1,5 +1,5 @@
 const { Client, Intents, User, GatewayIntentBits, Interaction, Constants, Collection, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, SelectMenuBuilder, ModalBuilder, TextInputBuilder, ActivityType, AutoModerationActionExecution } = require("discord.js");
-const client = new Client({ partials: ["CHANNEL"], intents: 33281 });
+const client = new Client({ partials: ["CHANNEL"], intents: 36355 });
 require("dotenv").config();
 const path = require('node:path');
 const fs = require("fs");

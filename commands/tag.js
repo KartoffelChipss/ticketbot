@@ -1,4 +1,4 @@
-const { PermissionFlagsBits, ApplicationCommand} = require("discord.js");
+const { PermissionFlagsBits, ApplicationCommand, ApplicationCommandOptionType} = require("discord.js");
 
 const tags = {
     paper: {
@@ -23,7 +23,7 @@ let command = {
     description: "Send a tag message",
     options: [
         {
-            type: 3,
+            type: ApplicationCommandOptionType.String,
             name: "tag",
             description: "The tag name",
             required: true,
@@ -35,7 +35,7 @@ let command = {
             }),
         },
         {
-            type: 6,
+            type: ApplicationCommandOptionType.User,
             name: "user",
             description: "The user to mention",
             required: false,
