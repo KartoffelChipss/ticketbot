@@ -12,7 +12,13 @@ const tags = {
         name: "Whitelist",
         title: "Whitelist Worlds",
         description: "If you're getting warning messages about Whitelisting your world, it's likely due to a configuration issue. Fortunately, this issue can be easily fixed!\n\n**Read our [Wiki](https://lsz.strassburger.dev/configuration/whitelist) for Help!**",
-    }
+    },
+    recipes: {
+        id: "recipes",
+        name: "Recipes",
+        title: "Recipes",
+        description: "You can view the recipe for an item using the command \`/lsz recipe <item>\` or modify it in the [config.yml](https://lsz.strassburger.dev/configuration/configuration-main) file. \n\n**For additional assistance, please refer to the corresponding [Wiki page](https://lsz.strassburger.dev/configuration/custom-crafting)!**",
+    },
 }
 
 /**
